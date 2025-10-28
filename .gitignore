@@ -1,0 +1,16 @@
+# Binaries
+bin/
+cc-status-line
+*.exe
+
+# Test files
+test-input.json
+*.jsonl
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
