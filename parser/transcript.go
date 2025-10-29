@@ -48,6 +48,11 @@ func ParseTranscript(filePath string) (*TranscriptData, error) {
 	var firstTimestamp, lastTimestamp time.Time
 
 	scanner := bufio.NewScanner(file)
+	// Increase buffer size to handle very long lines (default is 64KB, we need more for large thinking blocks)
+	const maxCapacity = 10 * 1024 * 1024 // 10MB
+	buf := make([]byte, maxCapacity)
+	scanner.Buffer(buf, maxCapacity)
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line == "" {
