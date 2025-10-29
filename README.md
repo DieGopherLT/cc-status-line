@@ -18,15 +18,12 @@ Model: Sonnet 4.5 | / main | (+156 -23) | Style: default | v2.0.28 | Ctx: ██
 
 ### Components
 
-- **Model**: Current Claude model (cyan)
-- **Git Branch**: Current branch or "(no git)" (yellow)
-- **Git Changes**: Lines added/removed or "(no git)" (green/red)
-- **Output Style**: Current output style (magenta)
-- **Version**: Claude Code version (blue)
-- **Context**: Visual bar showing context window usage (color-coded)
-  - Green: 0-60%
-  - Yellow: 61-80%
-  - Red: 81-100%
+- **Model**: Current Claude model (yellow)
+- **Git Branch**: Current branch or "(no git)" (red)
+- **Git Changes**: Lines added/removed or "(no git)" (green for additions, red for deletions)
+- **Output Style**: Current output style (dark blue)
+- **Version**: Claude Code version (light blue)
+- **Context**: Visual bar showing context window usage (white for filled blocks, dim gray for empty blocks)
 
 ## Installation
 
@@ -86,43 +83,6 @@ Add to your Claude Code configuration file (`~/.claude/config.json` or `.claude/
 }
 ```
 
-## How It Works
-
-The status line binary:
-
-1. Reads JSON from stdin containing session information
-2. Parses the transcript JSONL file to extract token usage
-3. Calculates metrics:
-   - **Total tokens**: Sum of ALL entries (main chain + sidechains)
-   - **Context length**: Most recent MAIN CHAIN entry only
-   - **Context percentage**: Context length / 200K tokens
-4. Extracts git information using git commands
-5. Formats and outputs a single-line colored status
-
-### Context Calculation
-
-Following the official Claude Code behavior:
-
-- **Context window** = tokens loaded for the next request
-- Only counts the most recent main chain entry (excludes agent/parallel requests)
-- Includes input tokens + cached tokens
-- Maximum context window: 200,000 tokens
-
-## Project Structure
-
-```
-cc-status-line/
-├── main.go              # Entry point
-├── parser/
-│   ├── status.go        # Status hook JSON parser
-│   └── transcript.go    # JSONL transcript parser
-├── metrics/
-│   ├── tokens.go        # Token metrics calculation
-│   └── git.go           # Git information extraction
-└── display/
-    └── formatter.go     # Status line formatter with lipgloss
-```
-
 ## Testing
 
 After building, test the binary with sample input:
@@ -131,9 +91,14 @@ After building, test the binary with sample input:
 cat test-input.json | ./bin/cc-status-line
 ```
 
-Expected output format:
+**Normal output:**
 ```
 Model: Sonnet 4.5 | / main | (+156 -23) | Style: default | v2.0.28 | Ctx: ████████░░ 78%
+```
+
+**Fallback output** (when context information is unavailable):
+```
+Model: Sonnet 4.5 | Style: default | v2.0.28 | ⚠ Context unavailable
 ```
 
 ## Requirements
