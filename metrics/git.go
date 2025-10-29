@@ -3,6 +3,7 @@ package metrics
 import (
 	"fmt"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -16,7 +17,7 @@ type GitInfo struct {
 }
 
 // GetGitInfo extracts git branch and change information
-func GetGitInfo(cwd string, linesAdded, linesRemoved int) *GitInfo {
+func GetGitInfo(cwd string) *GitInfo {
 	info := &GitInfo{
 		IsGitRepo: false,
 	}
@@ -37,6 +38,9 @@ func GetGitInfo(cwd string, linesAdded, linesRemoved int) *GitInfo {
 	info.Branch = strings.TrimSpace(string(output))
 	info.BranchDisplay = info.Branch
 
+	// Get git changes (staged + unstaged) from git directly
+	linesAdded, linesRemoved := getGitChanges(cwd)
+
 	// Format changes
 	if linesAdded > 0 || linesRemoved > 0 {
 		info.HasChanges = true
@@ -46,6 +50,51 @@ func GetGitInfo(cwd string, linesAdded, linesRemoved int) *GitInfo {
 	}
 
 	return info
+}
+
+// getGitChanges gets the number of lines added and removed from git
+func getGitChanges(cwd string) (int, int) {
+	// Get all changes (staged + unstaged) compared to HEAD
+	cmd := exec.Command("git", "diff", "--numstat", "HEAD")
+	cmd.Dir = cwd
+	output, err := cmd.Output()
+
+	if err != nil {
+		return 0, 0
+	}
+
+	var totalAdded, totalRemoved int
+
+	// Parse numstat output: "additions\tdeletions\tfilename"
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+
+		parts := strings.Fields(line)
+		if len(parts) < 3 {
+			continue
+		}
+
+		// Parse additions
+		if parts[0] != "-" {
+			added, err := strconv.Atoi(parts[0])
+			if err == nil {
+				totalAdded += added
+			}
+		}
+
+		// Parse deletions
+		if parts[1] != "-" {
+			removed, err := strconv.Atoi(parts[1])
+			if err == nil {
+				totalRemoved += removed
+			}
+		}
+	}
+
+	return totalAdded, totalRemoved
 }
 
 // formatGitChanges formats the git changes display

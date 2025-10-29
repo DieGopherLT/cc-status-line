@@ -36,8 +36,8 @@ func run() {
 	// Calculate token metrics
 	tokenMetrics := metrics.CalculateTokenMetrics(transcriptData)
 
-	// Get git information
-	gitInfo := metrics.GetGitInfo(hook.Workspace.CurrentDir, hook.Cost.TotalLinesAdded, hook.Cost.TotalLinesRemoved)
+	// Get git information (changes obtained directly from git)
+	gitInfo := metrics.GetGitInfo(hook.Workspace.CurrentDir)
 
 	// Format and output status line
 	statusLine := display.FormatStatusLine(hook, tokenMetrics, gitInfo)
