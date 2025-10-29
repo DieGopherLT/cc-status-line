@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/diegopher/cc-status-line/parser"
+	"github.com/DieGopherLT/cc-status-line/parser"
 )
 
 // TokenMetrics contains calculated token usage metrics

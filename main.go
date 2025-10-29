@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/diegopher/cc-status-line/display"
-	"github.com/diegopher/cc-status-line/metrics"
-	"github.com/diegopher/cc-status-line/parser"
+	"github.com/DieGopherLT/cc-status-line/display"
+	"github.com/DieGopherLT/cc-status-line/metrics"
+	"github.com/DieGopherLT/cc-status-line/parser"
 )
 
 func main() {

@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/diegopher/cc-status-line/metrics"
-	"github.com/diegopher/cc-status-line/parser"
+	"github.com/DieGopherLT/cc-status-line/metrics"
+	"github.com/DieGopherLT/cc-status-line/parser"
 	"github.com/muesli/termenv"
 )
 
