@@ -29,11 +29,14 @@ var (
 )
 
 const (
-	totalBlocks  = 10
-	filledBlock  = "█"
-	emptyBlock   = "░"
-	separator    = " | "
+	totalBlocks = 10
+	filledBlock = "█"
+	emptyBlock  = "░"
+	separator   = " | "
 )
+
+// Partial block characters for sub-block precision (87.5% down to 12.5%)
+var partialBlocks = []string{"▉", "▊", "▋", "▌", "▍", "▎", "▏"}
 
 // FormatStatusLine creates the formatted status line output dynamically
 func FormatStatusLine(hook *parser.StatusHook, tokenMetrics *metrics.TokenMetrics, gitInfo *metrics.GitInfo) string {
@@ -103,19 +106,42 @@ func formatGitChanges(gitInfo *metrics.GitInfo) string {
 	return grayStyle.Render(text)
 }
 
-// formatContextVisualization creates the context window block display
+// formatContextVisualization creates the context window block display with partial blocks
 func formatContextVisualization(tokenMetrics *metrics.TokenMetrics) string {
 	percentage := tokenMetrics.ContextPercentage
-	filledCount := min(int((percentage / 100.0) * float64(totalBlocks)), totalBlocks)
 
-	emptyCount := totalBlocks - filledCount
+	// Calculate full blocks (each block = 10%)
+	fullBlocks := int(percentage / 10)
+	remainder := percentage - float64(fullBlocks*10) // 0-10
 
-	// Build the block display (use white for filled blocks)
-	filled := strings.Repeat(filledBlock, filledCount)
-	empty := strings.Repeat(emptyBlock, emptyCount)
+	// Build filled portion
+	filledStr := strings.Repeat(filledBlock, fullBlocks)
 
-	blocks := whiteStyle.Render(filled) + dimStyle.Render(empty)
+	// Add partial block if remainder is significant (>1.25%)
+	usedBlocks := fullBlocks
+	if remainder > 1.25 && fullBlocks < totalBlocks {
+		// Map remainder (0-10) to partial block index (0-6)
+		// Each partial block represents ~1.25% (10% / 8 states)
+		idx := int(remainder / 1.25)
+		if idx > 6 {
+			idx = 6 // Cap at the last partial block
+		}
+		// Reverse the array: larger remainder = earlier character (fuller)
+		partialChar := partialBlocks[6-idx]
+		filledStr += partialChar
+		usedBlocks++
+	}
 
-	// Format: "Ctx: ████████░░ 78%"
-	return fmt.Sprintf("Ctx: %s %d%%", blocks, int(percentage))
+	// Render filled blocks with white color
+	filledBar := whiteStyle.Render(filledStr)
+
+	// Add empty blocks with dim color
+	emptyCount := totalBlocks - usedBlocks
+	if emptyCount > 0 {
+		emptyBar := dimStyle.Render(strings.Repeat(emptyBlock, emptyCount))
+		filledBar += emptyBar
+	}
+
+	// Format: "Ctx: ████▋░░░░░ 47%"
+	return fmt.Sprintf("Ctx: %s %d%%", filledBar, int(percentage))
 }
