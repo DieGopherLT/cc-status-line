@@ -23,20 +23,10 @@ func run() {
 		return
 	}
 
-	// Parse transcript file
-	transcriptData, err := parser.ParseTranscript(hook.TranscriptPath)
-	if err != nil {
-		// Partial fallback: show basic info without context
-		fmt.Fprintf(os.Stderr, "cc-status-line warning: failed to parse transcript: %v\n", err)
-		statusLine := display.FormatStatusLineMinimal(hook)
-		fmt.Println(statusLine)
-		return
-	}
+	// Calculate token metrics (handles nil gracefully)
+	tokenMetrics := metrics.CalculateTokenMetrics(hook.ContextWindow)
 
-	// Calculate token metrics
-	tokenMetrics := metrics.CalculateTokenMetrics(transcriptData)
-
-	// Get git information (changes obtained directly from git)
+	// Get git information
 	gitInfo := metrics.GetGitInfo(hook.Workspace.CurrentDir)
 
 	// Format and output status line

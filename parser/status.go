@@ -8,15 +8,16 @@ import (
 
 // StatusHook represents the JSON structure received from Claude Code's Status hook
 type StatusHook struct {
-	HookEventName   string    `json:"hook_event_name"`
-	SessionID       string    `json:"session_id"`
-	TranscriptPath  string    `json:"transcript_path"`
-	CWD             string    `json:"cwd"`
-	Model           Model     `json:"model"`
-	Workspace       Workspace `json:"workspace"`
-	Version         string    `json:"version"`
-	OutputStyle     Output    `json:"output_style"`
-	Cost            Cost      `json:"cost"`
+	HookEventName   string         `json:"hook_event_name"`
+	SessionID       string         `json:"session_id"`
+	TranscriptPath  string         `json:"transcript_path"`
+	CWD             string         `json:"cwd"`
+	Model           Model          `json:"model"`
+	Workspace       Workspace      `json:"workspace"`
+	Version         string         `json:"version"`
+	OutputStyle     Output         `json:"output_style"`
+	Cost            Cost           `json:"cost"`
+	ContextWindow   *ContextWindow `json:"context_window"`
 }
 
 // Model contains information about the Claude model being used
@@ -45,6 +46,13 @@ type Cost struct {
 	TotalLinesRemoved   int     `json:"total_lines_removed"`
 }
 
+// ContextWindow contains token usage information for the session
+type ContextWindow struct {
+	TotalInputTokens  int `json:"total_input_tokens"`
+	TotalOutputTokens int `json:"total_output_tokens"`
+	ContextWindowSize int `json:"context_window_size"`
+}
+
 // ParseStatusHook reads and parses the status hook JSON from an io.Reader
 func ParseStatusHook(reader io.Reader) (*StatusHook, error) {
 	var hook StatusHook
@@ -55,9 +63,6 @@ func ParseStatusHook(reader io.Reader) (*StatusHook, error) {
 	}
 
 	// Validate required fields
-	if hook.TranscriptPath == "" {
-		return nil, fmt.Errorf("transcript_path is required")
-	}
 	if hook.Model.DisplayName == "" {
 		return nil, fmt.Errorf("model.display_name is required")
 	}

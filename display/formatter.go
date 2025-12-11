@@ -35,64 +35,43 @@ const (
 	separator    = " | "
 )
 
-// FormatStatusLine creates the formatted status line output
+// FormatStatusLine creates the formatted status line output dynamically
 func FormatStatusLine(hook *parser.StatusHook, tokenMetrics *metrics.TokenMetrics, gitInfo *metrics.GitInfo) string {
 	var segments []string
 
-	// Model info: "Model: Sonnet 4.5"
+	// Model info (always present - required field)
 	modelSegment := fmt.Sprintf("Model: %s", hook.Model.DisplayName)
 	segments = append(segments, modelStyle.Render(modelSegment))
 
-	// Git branch: "/ branch-name" or "/ no git"
-	gitBranchSegment := fmt.Sprintf("/ %s", gitInfo.BranchDisplay)
-	segments = append(segments, branchStyle.Render(gitBranchSegment))
+	// Git branch (only if git repo detected)
+	if gitInfo != nil && gitInfo.IsGitRepo {
+		gitBranchSegment := fmt.Sprintf("/ %s", gitInfo.BranchDisplay)
+		segments = append(segments, branchStyle.Render(gitBranchSegment))
 
-	// Git changes: "(+156 -23)" or "(no git)"
-	segments = append(segments, formatGitChanges(gitInfo))
+		// Git changes (only if git repo detected)
+		segments = append(segments, formatGitChanges(gitInfo))
+	}
 
-	// Output style: "Style: default"
-	styleSegment := fmt.Sprintf("Style: %s", hook.OutputStyle.Name)
-	segments = append(segments, styleColor.Render(styleSegment))
+	// Output style (only if present)
+	if hook.OutputStyle.Name != "" {
+		styleSegment := fmt.Sprintf("Style: %s", hook.OutputStyle.Name)
+		segments = append(segments, styleColor.Render(styleSegment))
+	}
 
-	// Version: "v2.0.28"
+	// Version (always present - required field)
 	versionSegment := fmt.Sprintf("v%s", hook.Version)
 	segments = append(segments, blueStyle.Render(versionSegment))
 
-	// Context visualization: "Ctx: ████████░░ 78%"
-	contextSegment := formatContextVisualization(tokenMetrics)
-	segments = append(segments, contextSegment)
+	// Context visualization (only if context data available)
+	if tokenMetrics != nil && tokenMetrics.ContextPercentage > 0 {
+		contextSegment := formatContextVisualization(tokenMetrics)
+		segments = append(segments, contextSegment)
+	}
 
 	// Join all segments with separator
 	statusLine := strings.Join(segments, grayStyle.Render(separator))
 
-	// Add vertical spacing (newlines before and after)
-	return "\n" + statusLine + "\n"
-}
-
-// FormatStatusLineMinimal creates a minimal status line without context info (for error fallback)
-func FormatStatusLineMinimal(hook *parser.StatusHook) string {
-	var segments []string
-
-	// Model info
-	modelSegment := fmt.Sprintf("Model: %s", hook.Model.DisplayName)
-	segments = append(segments, modelStyle.Render(modelSegment))
-
-	// Output style
-	styleSegment := fmt.Sprintf("Style: %s", hook.OutputStyle.Name)
-	segments = append(segments, styleColor.Render(styleSegment))
-
-	// Version
-	versionSegment := fmt.Sprintf("v%s", hook.Version)
-	segments = append(segments, blueStyle.Render(versionSegment))
-
-	// Warning indicator (use orange/yellow for warnings)
-	warningStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
-	segments = append(segments, warningStyle.Render("⚠ Context unavailable"))
-
-	// Join all segments with separator
-	statusLine := strings.Join(segments, grayStyle.Render(separator))
-
-	// Add vertical spacing (newlines before and after)
+	// Add vertical spacing
 	return "\n" + statusLine + "\n"
 }
 
