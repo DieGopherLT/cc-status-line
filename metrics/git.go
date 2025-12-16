@@ -14,6 +14,8 @@ type GitInfo struct {
 	HasChanges    bool
 	ChangesText   string
 	IsGitRepo     bool
+	Additions     int
+	Deletions     int
 }
 
 // GetGitInfo extracts git branch and change information
@@ -40,6 +42,8 @@ func GetGitInfo(cwd string) *GitInfo {
 
 	// Get git changes (staged + unstaged) from git directly
 	linesAdded, linesRemoved := getGitChanges(cwd)
+	info.Additions = linesAdded
+	info.Deletions = linesRemoved
 
 	// Format changes
 	if linesAdded > 0 || linesRemoved > 0 {

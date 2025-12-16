@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -10,14 +11,16 @@ import (
 )
 
 func main() {
-	run()
+	style := flag.String("style", "classic", "Status line style: classic, gradient, compact")
+	flag.Parse()
+
+	run(*style)
 }
 
-func run() {
+func run(style string) {
 	// Parse status hook JSON from stdin
 	hook, err := parser.ParseStatusHook(os.Stdin)
 	if err != nil {
-		// Fallback: show error status
 		fmt.Fprintf(os.Stderr, "cc-status-line error: %v\n", err)
 		fmt.Println("Status: Error parsing input")
 		return
@@ -29,7 +32,8 @@ func run() {
 	// Get git information
 	gitInfo := metrics.GetGitInfo(hook.Workspace.CurrentDir)
 
-	// Format and output status line
-	statusLine := display.FormatStatusLine(hook, tokenMetrics, gitInfo)
+	// Format and output status line using selected formatter
+	formatter := display.NewFormatter(style)
+	statusLine := formatter.Format(hook, tokenMetrics, gitInfo)
 	fmt.Println(statusLine)
 }
