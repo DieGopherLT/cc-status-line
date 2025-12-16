@@ -46,11 +46,20 @@ type Cost struct {
 	TotalLinesRemoved   int     `json:"total_lines_removed"`
 }
 
+// CurrentUsage contains detailed token usage for the current request
+type CurrentUsage struct {
+	InputTokens              int `json:"input_tokens"`
+	OutputTokens             int `json:"output_tokens"`
+	CacheCreationInputTokens int `json:"cache_creation_input_tokens"`
+	CacheReadInputTokens     int `json:"cache_read_input_tokens"`
+}
+
 // ContextWindow contains token usage information for the session
 type ContextWindow struct {
-	TotalInputTokens  int `json:"total_input_tokens"`
-	TotalOutputTokens int `json:"total_output_tokens"`
-	ContextWindowSize int `json:"context_window_size"`
+	TotalInputTokens  int           `json:"total_input_tokens"`
+	TotalOutputTokens int           `json:"total_output_tokens"`
+	ContextWindowSize int           `json:"context_window_size"`
+	CurrentUsage      *CurrentUsage `json:"current_usage"`
 }
 
 // ParseStatusHook reads and parses the status hook JSON from an io.Reader

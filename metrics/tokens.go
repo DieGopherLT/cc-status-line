@@ -20,9 +20,16 @@ func CalculateTokenMetrics(contextWindow *parser.ContextWindow) *TokenMetrics {
 		return metrics
 	}
 
-	// Calculate context length: total_input + total_output
-	metrics.ContextLength = contextWindow.TotalInputTokens + contextWindow.TotalOutputTokens
 	metrics.ContextWindowSize = contextWindow.ContextWindowSize
+
+	// Calculate context length using current_usage if available
+	if contextWindow.CurrentUsage != nil {
+		usage := contextWindow.CurrentUsage
+		metrics.ContextLength = usage.InputTokens + usage.CacheCreationInputTokens + usage.CacheReadInputTokens
+	} else {
+		// Fallback to legacy calculation
+		metrics.ContextLength = contextWindow.TotalInputTokens + contextWindow.TotalOutputTokens
+	}
 
 	// Calculate context percentage
 	if metrics.ContextWindowSize > 0 && metrics.ContextLength > 0 {

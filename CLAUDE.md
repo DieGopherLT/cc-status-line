@@ -36,29 +36,29 @@ sudo cp bin/cc-status-line /usr/local/bin/
 
 ## Architecture
 
-### Data Flow (main.go:16-44)
+### Data Flow (main.go:16-35)
 
 1. `parser.ParseStatusHook(os.Stdin)` - Parse Claude Code's status hook JSON
-2. `parser.ParseTranscript(hook.TranscriptPath)` - Read JSONL transcript file
-3. `metrics.CalculateTokenMetrics(transcriptData)` - Calculate context window usage
-4. `metrics.GetGitInfo(hook.Workspace.CurrentDir)` - Execute git commands
-5. `display.FormatStatusLine(...)` - Produce styled output
+2. `metrics.CalculateTokenMetrics(hook.ContextWindow)` - Calculate context window usage from status hook
+3. `metrics.GetGitInfo(hook.Workspace.CurrentDir)` - Execute git commands
+4. `display.FormatStatusLine(...)` - Produce styled output
 
 ### Package Responsibilities
 
 | Package | Purpose | Key Details |
 |---------|---------|-------------|
-| **parser/** | JSON/JSONL parsing | 10MB buffer for large thinking blocks; skips malformed lines silently |
-| **metrics/** | Token & git calculations | Context from **most recent main chain entry** (non-sidechain, non-error); git uses `diff --numstat HEAD` |
+| **parser/** | JSON parsing | Parses status hook JSON including `context_window` with `current_usage` |
+| **metrics/** | Token & git calculations | Context from `current_usage` field; git uses `diff --numstat HEAD` |
 | **display/** | Terminal styling | Forces TrueColor mode; 10-block visual context indicator (█/░) |
 
 ### Key Implementation Details
 
-**Context Window Calculation (metrics/tokens.go:24-73)**
+**Context Window Calculation (metrics/tokens.go:25-32)**
 
-- Uses most recent non-sidechain, non-error entry's tokens
+- Uses `current_usage` from status hook's `context_window` field
 - Formula: `input_tokens + cache_read_input_tokens + cache_creation_input_tokens`
-- Percentage calculated against 200K token window (hardcoded constant)
+- Window size from `context_window.context_window_size` (dynamic, not hardcoded)
+- Fallback to `total_input_tokens + total_output_tokens` if `current_usage` is nil
 
 **Git Integration (metrics/git.go:20-53)**
 
@@ -88,8 +88,7 @@ sudo cp bin/cc-status-line /usr/local/bin/
 .
 ├── main.go                 # Entry point and orchestration
 ├── parser/
-│   ├── status.go          # Status hook JSON parsing
-│   └── transcript.go      # Transcript JSONL parsing (10MB buffer)
+│   └── status.go          # Status hook JSON parsing (includes ContextWindow, CurrentUsage)
 ├── metrics/
 │   ├── tokens.go          # Token usage calculations
 │   └── git.go             # Git information extraction
@@ -101,9 +100,8 @@ sudo cp bin/cc-status-line /usr/local/bin/
 
 - **Structs with JSON tags** in parser/status.go define Claude Code's API contract
 - **Lipgloss styles** defined as package-level vars in display/formatter.go
-- **Token metrics always come from transcript parsing**, never from stdin hook's `Cost` field
+- **Token metrics come from** `context_window.current_usage` in the status hook JSON
 - **Git commands execute in** `hook.Workspace.CurrentDir`
-- **Transcript parsing** uses 10MB scanner buffer to handle large thinking blocks
 
 ## Dependencies
 
@@ -112,6 +110,4 @@ sudo cp bin/cc-status-line /usr/local/bin/
 
 ## Important Constants
 
-- `maxContextWindow = 200000` (metrics/tokens.go:21) - Claude's context window size
 - `totalBlocks = 10` (display/formatter.go:32) - Number of blocks in context visualization
-- `maxCapacity = 10 * 1024 * 1024` (parser/transcript.go:52) - Scanner buffer size
