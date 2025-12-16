@@ -25,21 +25,6 @@ func (f *NerdFormatter) Format(hook *parser.StatusHook, tokenMetrics *metrics.To
 	// Model name
 	segments = append(segments, modelStyle.Render(hook.Model.DisplayName))
 
-	// Context with absolute tokens
-	if tokenMetrics != nil && tokenMetrics.ContextPercentage > 0 {
-		currentTokens := tokenMetrics.ContextLength
-		maxTokens := tokenMetrics.ContextWindowSize
-		bar := f.formatContextBar(tokenMetrics.ContextPercentage)
-
-		ctxSegment := fmt.Sprintf("CTX: %s %s%s (%d%%) %s",
-			f.formatTokens(currentTokens),
-			"/",
-			f.formatTokens(maxTokens),
-			int(tokenMetrics.ContextPercentage),
-			bar)
-		segments = append(segments, ctxSegment)
-	}
-
 	// Git branch and changes
 	if gitInfo != nil && gitInfo.IsGitRepo {
 		gitSegment := fmt.Sprintf("%s %s%d %s%d",
@@ -51,9 +36,28 @@ func (f *NerdFormatter) Format(hook *parser.StatusHook, tokenMetrics *metrics.To
 		segments = append(segments, gitSegment)
 	}
 
+	// Output style (if present)
+	if hook.OutputStyle.Name != "" {
+		segments = append(segments, styleColor.Render(hook.OutputStyle.Name))
+	}
+
 	// Version
 	versionSegment := blueStyle.Render("v" + hook.Version)
 	segments = append(segments, versionSegment)
+
+	// Context with absolute tokens
+	if tokenMetrics != nil && tokenMetrics.ContextPercentage > 0 {
+		currentTokens := tokenMetrics.ContextLength
+		maxTokens := tokenMetrics.ContextWindowSize
+		bar := f.formatContextBar(tokenMetrics.ContextPercentage)
+
+		ctxSegment := fmt.Sprintf("CTX: %s/%s (%d%%) %s",
+			f.formatTokens(currentTokens),
+			f.formatTokens(maxTokens),
+			int(tokenMetrics.ContextPercentage),
+			bar)
+		segments = append(segments, ctxSegment)
+	}
 
 	// Join segments with box separator
 	content := strings.Join(segments, grayStyle.Render(" │ "))
@@ -67,7 +71,7 @@ func (f *NerdFormatter) Format(hook *parser.StatusHook, tokenMetrics *metrics.To
 	middle := grayStyle.Render("│ ") + content + grayStyle.Render(" │")
 	bottomBorder := grayStyle.Render("└" + strings.Repeat("─", totalWidth) + "┘")
 
-	return "\n" + topBorder + "\n" + middle + "\n" + bottomBorder + "\n"
+	return topBorder + "\n" + middle + "\n" + bottomBorder
 }
 
 // formatContextBar creates a 10-block context visualization

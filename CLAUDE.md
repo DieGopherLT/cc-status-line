@@ -26,6 +26,14 @@ stdin (JSON) → parser → metrics → display → stdout (styled text)
 
 ```bash
 cat test-input.json | ./bin/cc-status-line
+cat test-input.json | ./bin/cc-status-line -style=gradient
+```
+
+**Preview all styles:**
+
+```bash
+./scripts/preview-styles.sh    # Bash/Zsh
+./scripts/preview-styles.fish  # Fish
 ```
 
 **Install globally (optional):**
@@ -36,12 +44,13 @@ sudo cp bin/cc-status-line /usr/local/bin/
 
 ## Architecture
 
-### Data Flow (main.go:16-35)
+### Data Flow (main.go:20-38)
 
 1. `parser.ParseStatusHook(os.Stdin)` - Parse Claude Code's status hook JSON
 2. `metrics.CalculateTokenMetrics(hook.ContextWindow)` - Calculate context window usage from status hook
 3. `metrics.GetGitInfo(hook.Workspace.CurrentDir)` - Execute git commands
-4. `display.FormatStatusLine(...)` - Produce styled output
+4. `display.NewFormatter(style)` - Create formatter based on `-style` flag
+5. `formatter.Format(...)` - Produce styled output
 
 ### Package Responsibilities
 
@@ -49,7 +58,8 @@ sudo cp bin/cc-status-line /usr/local/bin/
 |---------|---------|-------------|
 | **parser/** | JSON parsing | Parses status hook JSON including `context_window` with `current_usage` |
 | **metrics/** | Token & git calculations | Context from `current_usage` field; git uses `diff --numstat HEAD` |
-| **display/** | Terminal styling | Forces TrueColor mode; 10-block visual context indicator (█/░) |
+| **display/** | Formatter factory | `NewFormatter(style)` returns appropriate `StatusLineFormatter` implementation |
+| **display/formatters/** | Style implementations | classic, gradient, compact, minimal, nerd formatters |
 
 ### Key Implementation Details
 
@@ -67,7 +77,7 @@ sudo cp bin/cc-status-line /usr/local/bin/
 - Gracefully returns "(no git)" when not in a repository
 - Handles binary files (marked with "-" in numstat)
 
-**Color Scheme (display/formatter.go:19-29)**
+**Color Scheme (display/formatters/styles.go:14-24)**
 
 - Yellow (226): model name
 - Red (196/203): branch, deletions
@@ -75,6 +85,8 @@ sudo cp bin/cc-status-line /usr/local/bin/
 - Blue (24): output style
 - Blue (111): version
 - Gray (242): separators
+- Gray (238): dim/empty blocks
+- White (255): context bar
 
 **Error Handling Pattern**
 
@@ -86,20 +98,31 @@ sudo cp bin/cc-status-line /usr/local/bin/
 
 ```text
 .
-├── main.go                 # Entry point and orchestration
+├── main.go                      # Entry point (-style flag) and orchestration
 ├── parser/
-│   └── status.go          # Status hook JSON parsing (includes ContextWindow, CurrentUsage)
+│   └── status.go                # Status hook JSON parsing (ContextWindow, CurrentUsage)
 ├── metrics/
-│   ├── tokens.go          # Token usage calculations
-│   └── git.go             # Git information extraction
-└── display/
-    └── formatter.go       # Terminal output formatting (lipgloss)
+│   ├── tokens.go                # Token usage calculations
+│   └── git.go                   # Git information extraction
+├── display/
+│   ├── formatter.go             # StatusLineFormatter interface & NewFormatter factory
+│   └── formatters/
+│       ├── styles.go            # Shared color definitions
+│       ├── classic.go           # Default style (10-block visual context)
+│       ├── gradient.go          # Gradient color context bar
+│       ├── compact.go           # Minimal width single-line
+│       ├── minimal.go           # Essential info only
+│       └── nerd.go              # Nerd Font icons
+└── scripts/
+    ├── preview-styles.sh        # Preview all styles (Bash)
+    └── preview-styles.fish      # Preview all styles (Fish)
 ```
 
 ## Coding Conventions
 
 - **Structs with JSON tags** in parser/status.go define Claude Code's API contract
-- **Lipgloss styles** defined as package-level vars in display/formatter.go
+- **Shared lipgloss styles** defined as package-level vars in display/formatters/styles.go
+- **New formatters** implement `StatusLineFormatter` interface and register in `display/formatter.go`
 - **Token metrics come from** `context_window.current_usage` in the status hook JSON
 - **Git commands execute in** `hook.Workspace.CurrentDir`
 
@@ -108,6 +131,16 @@ sudo cp bin/cc-status-line /usr/local/bin/
 - `github.com/charmbracelet/lipgloss` - Terminal styling framework
 - `github.com/muesli/termenv` - Terminal environment detection (used by lipgloss)
 
+## Available Styles
+
+| Style | Flag | Description |
+|-------|------|-------------|
+| **classic** | `-style=classic` | Default. 10-block visual context indicator (█/░) |
+| **gradient** | `-style=gradient` | Gradient color context bar with smooth transitions |
+| **compact** | `-style=compact` | Minimal width, single line |
+| **minimal** | `-style=minimal` | Essential info only (model, context %) |
+| **nerd** | `-style=nerd` | Uses Nerd Font icons |
+
 ## Important Constants
 
-- `totalBlocks = 10` (display/formatter.go:32) - Number of blocks in context visualization
+- `totalBlocks = 10` (display/formatters/classic.go) - Number of blocks in classic context visualization

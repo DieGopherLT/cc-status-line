@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/DieGopherLT/cc-status-line/metrics"
 	"github.com/DieGopherLT/cc-status-line/parser"
 )
@@ -57,8 +58,11 @@ func (f *ClassicFormatter) Format(hook *parser.StatusHook, tokenMetrics *metrics
 	// Join all segments with separator
 	statusLine := strings.Join(segments, grayStyle.Render(classicSeparator))
 
-	// Add vertical spacing
-	return "\n" + statusLine + "\n"
+	// Add subtle horizontal lines for visual breathing room
+	width := lipgloss.Width(statusLine)
+	line := lineStyle.Render(strings.Repeat("─", width))
+
+	return line + "\n" + statusLine + "\n" + line
 }
 
 // formatGitChanges formats git changes with appropriate colors

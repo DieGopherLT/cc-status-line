@@ -35,5 +35,6 @@ func run(style string) {
 	// Format and output status line using selected formatter
 	formatter := display.NewFormatter(style)
 	statusLine := formatter.Format(hook, tokenMetrics, gitInfo)
+
 	fmt.Println(statusLine)
 }

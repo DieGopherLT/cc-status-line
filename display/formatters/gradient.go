@@ -34,12 +34,6 @@ func (f *GradientFormatter) Format(hook *parser.StatusHook, tokenMetrics *metric
 	// Model name (compact, no "Model:" prefix)
 	segments = append(segments, modelStyle.Render(hook.Model.DisplayName))
 
-	// Context visualization with gradient bar
-	if tokenMetrics != nil && tokenMetrics.ContextPercentage > 0 {
-		contextSegment := f.formatGradientBar(tokenMetrics)
-		segments = append(segments, contextSegment)
-	}
-
 	// Git info
 	if gitInfo != nil && gitInfo.IsGitRepo {
 		gitSegment := f.formatGitInfo(gitInfo)
@@ -55,10 +49,20 @@ func (f *GradientFormatter) Format(hook *parser.StatusHook, tokenMetrics *metric
 	versionSegment := fmt.Sprintf("v%s", hook.Version)
 	segments = append(segments, blueStyle.Render(versionSegment))
 
+	// Context visualization with gradient bar
+	if tokenMetrics != nil && tokenMetrics.ContextPercentage > 0 {
+		contextSegment := f.formatGradientBar(tokenMetrics)
+		segments = append(segments, contextSegment)
+	}
+
 	// Join with vertical bar separator
 	statusLine := strings.Join(segments, grayStyle.Render(gradientSeparator))
 
-	return "\n" + statusLine + "\n"
+	// Add subtle horizontal lines for visual breathing room
+	width := lipgloss.Width(statusLine)
+	line := lineStyle.Render(strings.Repeat("─", width))
+
+	return line + "\n" + statusLine + "\n" + line
 }
 
 // formatGradientBar creates a height-variable bar with color based on usage

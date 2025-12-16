@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/DieGopherLT/cc-status-line/metrics"
 	"github.com/DieGopherLT/cc-status-line/parser"
 )
@@ -16,11 +17,11 @@ const (
 
 // Unicode icons for compact style
 const (
-	iconModel   = "◈"
+	iconModel   = "❋"
 	iconStyle   = "⎔"
 	iconVersion = "⌘"
 	iconContext = "◐"
-	iconBranch  = ""
+	iconBranch  = "⎇"
 	iconAdd     = "↑"
 	iconDel     = "↓"
 )
@@ -36,6 +37,12 @@ func (f *CompactFormatter) Format(hook *parser.StatusHook, tokenMetrics *metrics
 	modelPart := fmt.Sprintf("%s %s", iconModel, hook.Model.DisplayName)
 	parts = append(parts, modelStyle.Render(modelPart))
 
+	// Git with icon and arrows
+	if gitInfo != nil && gitInfo.IsGitRepo {
+		gitPart := f.formatGitInfo(gitInfo)
+		parts = append(parts, gitPart)
+	}
+
 	// Output style with icon
 	if hook.OutputStyle.Name != "" {
 		stylePart := fmt.Sprintf("%s %s", iconStyle, hook.OutputStyle.Name)
@@ -46,22 +53,20 @@ func (f *CompactFormatter) Format(hook *parser.StatusHook, tokenMetrics *metrics
 	versionPart := fmt.Sprintf("%s %s", iconVersion, hook.Version)
 	parts = append(parts, blueStyle.Render(versionPart))
 
-	// Context with icon and wider bar
+	// Context with icon and wider bar (last for visual balance)
 	if tokenMetrics != nil && tokenMetrics.ContextPercentage > 0 {
 		contextPart := f.formatContextBar(tokenMetrics)
 		parts = append(parts, contextPart)
 	}
 
-	// Git with icon and arrows
-	if gitInfo != nil && gitInfo.IsGitRepo {
-		gitPart := f.formatGitInfo(gitInfo)
-		parts = append(parts, gitPart)
-	}
-
 	// Join with double space
 	statusLine := strings.Join(parts, "  ")
 
-	return "\n" + statusLine + "\n"
+	// Add subtle horizontal lines for visual breathing room
+	width := lipgloss.Width(statusLine)
+	line := lineStyle.Render(strings.Repeat("─", width))
+
+	return line + "\n" + statusLine + "\n" + line
 }
 
 // formatContextBar creates a 20-character context bar

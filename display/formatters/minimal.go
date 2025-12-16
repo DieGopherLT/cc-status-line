@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/DieGopherLT/cc-status-line/metrics"
 	"github.com/DieGopherLT/cc-status-line/parser"
 )
@@ -17,12 +18,6 @@ func (f *MinimalFormatter) Format(hook *parser.StatusHook, tokenMetrics *metrics
 
 	// Model name (always present)
 	parts = append(parts, modelStyle.Render(hook.Model.DisplayName))
-
-	// Context percentage (only if available)
-	if tokenMetrics != nil && tokenMetrics.ContextPercentage > 0 {
-		ctxPart := fmt.Sprintf("%d%%", int(tokenMetrics.ContextPercentage))
-		parts = append(parts, ctxPart)
-	}
 
 	// Git branch and changes
 	if gitInfo != nil && gitInfo.IsGitRepo {
@@ -45,6 +40,18 @@ func (f *MinimalFormatter) Format(hook *parser.StatusHook, tokenMetrics *metrics
 	// Version (always present)
 	parts = append(parts, blueStyle.Render(hook.Version))
 
-	// Join with single space, no newlines
-	return strings.Join(parts, " ")
+	// Context percentage (only if available)
+	if tokenMetrics != nil && tokenMetrics.ContextPercentage > 0 {
+		ctxPart := fmt.Sprintf("%d%%", int(tokenMetrics.ContextPercentage))
+		parts = append(parts, ctxPart)
+	}
+
+	// Join with single space
+	statusLine := strings.Join(parts, " ")
+
+	// Add subtle horizontal lines for visual breathing room
+	width := lipgloss.Width(statusLine)
+	line := lineStyle.Render(strings.Repeat("─", width))
+
+	return line + "\n" + statusLine + "\n" + line
 }
