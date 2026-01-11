@@ -1,10 +1,10 @@
 package display
 
 import (
-	"github.com/charmbracelet/lipgloss"
 	"github.com/DieGopherLT/cc-status-line/display/formatters"
 	"github.com/DieGopherLT/cc-status-line/metrics"
 	"github.com/DieGopherLT/cc-status-line/parser"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
 )
 

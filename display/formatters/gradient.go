@@ -4,18 +4,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/DieGopherLT/cc-status-line/metrics"
 	"github.com/DieGopherLT/cc-status-line/parser"
+	"github.com/charmbracelet/lipgloss"
 )
 
 const (
 	gradientTotalBlocks = 10
 	gradientSeparator   = " │ "
 )
-
-// Height-variable block characters (from lowest to highest)
-var gradientBlocks = []string{"▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"}
 
 // Color thresholds for gradient bar
 var (
@@ -80,42 +77,9 @@ func (f *GradientFormatter) formatGradientBar(tokenMetrics *metrics.TokenMetrics
 		barStyle = gradientGreen
 	}
 
-	// Calculate filled blocks
-	filledCount := int(percentage / 10)
-	remainder := percentage - float64(filledCount*10)
+	bar := RenderProgressBar(percentage, gradientTotalBlocks, VerticalBlocks, barStyle, dimStyle)
 
-	// Build the bar with height-variable blocks
-	var bar strings.Builder
-
-	// Full height blocks for filled portion
-	for i := 0; i < filledCount && i < gradientTotalBlocks; i++ {
-		bar.WriteString(gradientBlocks[7]) // Full block █
-	}
-
-	// Partial block based on remainder
-	if filledCount < gradientTotalBlocks && remainder > 0 {
-		// Map remainder (0-10) to block index (0-7)
-		idx := int(remainder * 8 / 10)
-		if idx > 7 {
-			idx = 7
-		}
-		bar.WriteString(gradientBlocks[idx])
-		filledCount++
-	}
-
-	// Empty blocks
-	emptyCount := gradientTotalBlocks - filledCount
-	if emptyCount > 0 {
-		bar.WriteString(dimStyle.Render(strings.Repeat("░", emptyCount)))
-	}
-
-	// Render filled portion with appropriate color
-	filledBar := barStyle.Render(bar.String()[:len(bar.String())-emptyCount*len("░")])
-	if emptyCount > 0 {
-		filledBar += dimStyle.Render(strings.Repeat("░", emptyCount))
-	}
-
-	return fmt.Sprintf("%s %d%%", filledBar, int(percentage))
+	return fmt.Sprintf("%s %d%%", bar, int(percentage))
 }
 
 // formatGitInfo formats git branch and changes

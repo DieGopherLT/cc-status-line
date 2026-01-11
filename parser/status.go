@@ -8,16 +8,16 @@ import (
 
 // StatusHook represents the JSON structure received from Claude Code's Status hook
 type StatusHook struct {
-	HookEventName   string         `json:"hook_event_name"`
-	SessionID       string         `json:"session_id"`
-	TranscriptPath  string         `json:"transcript_path"`
-	CWD             string         `json:"cwd"`
-	Model           Model          `json:"model"`
-	Workspace       Workspace      `json:"workspace"`
-	Version         string         `json:"version"`
-	OutputStyle     Output         `json:"output_style"`
-	Cost            Cost           `json:"cost"`
-	ContextWindow   *ContextWindow `json:"context_window"`
+	HookEventName  string         `json:"hook_event_name"`
+	SessionID      string         `json:"session_id"`
+	TranscriptPath string         `json:"transcript_path"`
+	CWD            string         `json:"cwd"`
+	Model          Model          `json:"model"`
+	Workspace      Workspace      `json:"workspace"`
+	Version        string         `json:"version"`
+	OutputStyle    Output         `json:"output_style"`
+	Cost           Cost           `json:"cost"`
+	ContextWindow  *ContextWindow `json:"context_window"`
 }
 
 // Model contains information about the Claude model being used
@@ -39,11 +39,11 @@ type Output struct {
 
 // Cost contains session cost and metrics
 type Cost struct {
-	TotalCostUSD        float64 `json:"total_cost_usd"`
-	TotalDurationMS     int64   `json:"total_duration_ms"`
-	TotalAPIDurationMS  int64   `json:"total_api_duration_ms"`
-	TotalLinesAdded     int     `json:"total_lines_added"`
-	TotalLinesRemoved   int     `json:"total_lines_removed"`
+	TotalCostUSD       float64 `json:"total_cost_usd"`
+	TotalDurationMS    int64   `json:"total_duration_ms"`
+	TotalAPIDurationMS int64   `json:"total_api_duration_ms"`
+	TotalLinesAdded    int     `json:"total_lines_added"`
+	TotalLinesRemoved  int     `json:"total_lines_removed"`
 }
 
 // CurrentUsage contains detailed token usage for the current request

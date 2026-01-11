@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/DieGopherLT/cc-status-line/metrics"
 	"github.com/DieGopherLT/cc-status-line/parser"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // MinimalFormatter implements an ultra-compact style with no decorations

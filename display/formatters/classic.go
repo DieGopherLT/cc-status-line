@@ -4,20 +4,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/DieGopherLT/cc-status-line/metrics"
 	"github.com/DieGopherLT/cc-status-line/parser"
+	"github.com/charmbracelet/lipgloss"
 )
 
 const (
 	classicTotalBlocks = 10
-	classicFilledBlock = "█"
-	classicEmptyBlock  = "░"
 	classicSeparator   = " | "
 )
-
-// Partial block characters for sub-block precision (87.5% down to 12.5%)
-var classicPartialBlocks = []string{"▉", "▊", "▋", "▌", "▍", "▎", "▏"}
 
 // ClassicFormatter implements the original status line style
 type ClassicFormatter struct{}
@@ -90,38 +85,11 @@ func (f *ClassicFormatter) formatGitChanges(gitInfo *metrics.GitInfo) string {
 	return grayStyle.Render(text)
 }
 
-// formatContextVisualization creates the context window block display with partial blocks
+// formatContextVisualization creates the context window block display with 1/8 precision
 func (f *ClassicFormatter) formatContextVisualization(tokenMetrics *metrics.TokenMetrics) string {
 	percentage := tokenMetrics.ContextPercentage
 
-	// Calculate full blocks (each block = 10%)
-	fullBlocks := int(percentage / 10)
-	remainder := percentage - float64(fullBlocks*10)
+	bar := RenderProgressBar(percentage, classicTotalBlocks, HorizontalBlocks, whiteStyle, dimStyle)
 
-	// Build filled portion
-	filledStr := strings.Repeat(classicFilledBlock, fullBlocks)
-
-	// Add partial block if remainder is significant (>1.25%)
-	usedBlocks := fullBlocks
-	if remainder > 1.25 && fullBlocks < classicTotalBlocks {
-		idx := int(remainder / 1.25)
-		if idx > 6 {
-			idx = 6
-		}
-		partialChar := classicPartialBlocks[6-idx]
-		filledStr += partialChar
-		usedBlocks++
-	}
-
-	// Render filled blocks with white color
-	filledBar := whiteStyle.Render(filledStr)
-
-	// Add empty blocks with dim color
-	emptyCount := classicTotalBlocks - usedBlocks
-	if emptyCount > 0 {
-		emptyBar := dimStyle.Render(strings.Repeat(classicEmptyBlock, emptyCount))
-		filledBar += emptyBar
-	}
-
-	return fmt.Sprintf("Ctx: %s %d%%", filledBar, int(percentage))
+	return fmt.Sprintf("Ctx: %s %d%%", bar, int(percentage))
 }

@@ -25,8 +25,8 @@ stdin (JSON) → parser → metrics → display → stdout (styled text)
 **Test:**
 
 ```bash
-cat test-input.json | ./bin/cc-status-line
-cat test-input.json | ./bin/cc-status-line -style=gradient
+cat status-line.json | ./bin/cc-status-line
+cat status-line.json | ./bin/cc-status-line -style=gradient
 ```
 
 **Preview all styles:**
@@ -108,6 +108,7 @@ sudo cp bin/cc-status-line /usr/local/bin/
 │   ├── formatter.go             # StatusLineFormatter interface & NewFormatter factory
 │   └── formatters/
 │       ├── styles.go            # Shared color definitions
+│       ├── progress.go          # RenderProgressBar() with 1/8 character precision
 │       ├── classic.go           # Default style (10-block visual context)
 │       ├── gradient.go          # Gradient color context bar
 │       ├── compact.go           # Minimal width single-line
@@ -135,7 +136,7 @@ sudo cp bin/cc-status-line /usr/local/bin/
 
 | Style | Flag | Description |
 |-------|------|-------------|
-| **classic** | `-style=classic` | Default. 10-block visual context indicator (█/░) |
+| **classic** | `-style=classic` | Default. 10-block visual context with 1/8 precision (80 steps) |
 | **gradient** | `-style=gradient` | Gradient color context bar with smooth transitions |
 | **compact** | `-style=compact` | Minimal width, single line |
 | **minimal** | `-style=minimal` | Essential info only (model, context %) |
@@ -144,3 +145,4 @@ sudo cp bin/cc-status-line /usr/local/bin/
 ## Important Constants
 
 - `totalBlocks = 10` (display/formatters/classic.go) - Number of blocks in classic context visualization
+- `HorizontalBlocks` / `VerticalBlocks` (display/formatters/progress.go) - Unicode fractional blocks for 1/8 precision
